@@ -1,0 +1,20 @@
+{
+  "desmembramento": [
+    {
+      "value": null,
+      "name": ""
+    },
+    {
+      "value": "UN",
+      "name": "Unidade - UN"
+    },
+    {
+      "value": "CX",
+      "name": "Caixa - CX"
+    },
+    {
+      "value": "FD",
+      "name": "Fardo - FD"
+    }
+  ]
+}

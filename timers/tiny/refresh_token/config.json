@@ -1,0 +1,15 @@
+{
+  "integracoes": [
+    "6788fb2fccaeae6b1cbc03fa",
+    "6788fc47ccaeae6b1cbc045c",
+    "6788fcb2ccaeae6b1cbc04c0",
+    "6788fd8bccaeae6b1cbc0549",
+    "678ff804a964586372d01142"
+  ],
+  "status": "active",
+  "timerActive": true,
+  "horarios": [
+    "00:00",
+    "12:00"
+  ]
+}

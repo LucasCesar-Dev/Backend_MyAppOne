@@ -1,0 +1,7 @@
+{
+"ignore": [
+  "./websocket/userSocketMap.json",
+  "./timers/**/*.json",
+  "./configs/**/*.json"
+]
+}

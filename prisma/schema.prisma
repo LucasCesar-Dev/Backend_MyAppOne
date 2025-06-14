@@ -1,0 +1,377 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Produtos {
+  id               String              @id @default(uuid())
+  sku              String              @unique
+  tinyId           String              @unique
+  name             String
+  photo            String?
+  cost             Float?
+  gtin             String?             @unique
+  searchform       String?
+  confirmform      String?
+  ignoreform       String?
+  ncm              String?
+  brandrule        String?
+  brandrulePremium String?
+  group            String?
+  fullrule         String?
+  weight           Float?
+  heigth           Float?
+  width            Float?
+  length           Float?
+  catalog_id       String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  logs             ProdutoLogs[]
+  porta_pallets    ProdutosOnPP[]
+  produtosCombo    Combos[]
+  produtosRobo     roboRegraMarca[]
+  produtosKit      ProdutosOnKit[]
+  timePrecos       HoraAlteracao[]
+  produtosCompra   ProdutosOnCompras[]
+  ProdutosVenda    ProdutosOnVendas[]
+  Desmembramento   Desmembramento[]
+  pickingId        Int?
+  picking          Pickings?           @relation(fields: [pickingId], references: [id], onDelete: SetNull)
+  category         Categorias?         @relation(fields: [categoriaId], references: [id])
+  categoriaId      Int?
+  brand            Marcas?             @relation(fields: [brandId], references: [id])
+  brandId          Int?
+}
+
+model Combos {
+  id         String   @id @default(uuid())
+  sku        String   @unique
+  idTiny     String
+  name       String
+  photo      String?
+  gtin       String?
+  catalog_id String?
+  quantity   Int
+  produto    Produtos @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Kits {
+  id         String          @id @default(uuid())
+  sku        String          @unique
+  idTiny     String
+  name       String
+  photo      String?
+  gtin       String?
+  catalog_id String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  produtos   ProdutosOnKit[]
+}
+
+
+model Desmembramento{
+    id          Int            @id @default(autoincrement())
+    produto     Produtos       @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+    produtoId   String
+    fornecedor  String
+    cpfCnpj     String
+    tipo        String
+    quantidade  Int
+}
+
+model Pickings {
+  id       Int        @id @default(autoincrement())
+  rua      String
+  coluna   String
+  display  String
+  tipo     String
+  isLocate Boolean
+  limit    Int
+  endereco String     @unique
+  produtos Produtos[]
+}
+
+model ProdutoLogs {
+  id        String   @id @default(uuid())
+  produto   Produtos @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId String
+  date      DateTime @default(now())
+  type      String
+  message   String
+  user      String
+}
+
+model PortaPallets {
+  id       String         @id @default(uuid())
+  isUsing  Boolean
+  rua      String
+  coluna   String
+  andar    String
+  endereco String
+  produtos ProdutosOnPP[]
+}
+
+model ProdutosOnKit {
+  quantity  Int
+  produto   Produtos @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId String
+  kit       Kits     @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  kitId     String
+
+  @@id([kitId, produtoId])
+  @@map("produtos_on_kit")
+}
+
+model ProdutosOnPP {
+  quantidade    Int
+  produto       Produtos     @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  portaPallet   PortaPallets @relation(fields: [portaPalletId], references: [id])
+  produtoId     String
+  portaPalletId String
+
+  @@id([produtoId, portaPalletId])
+  @@map("produtos_on_pp")
+}
+
+model Categorias {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  isSpecial Boolean
+  produtos  Produtos[]
+}
+
+model Marcas {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  produtos Produtos[]
+}
+
+model HoraAlteracao {
+  id        String   @id @default(uuid())
+  action    String
+  date      DateTime
+  day       Float
+  produto   Produtos @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId String
+
+  @@index([produtoId])
+}
+
+model roboRegraMarca {
+  id        Int      @id @default(autoincrement())
+  classico  Float?
+  premium   Float?
+  catalogo  Float?
+  full      Float?
+  produto   Produtos @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Notas fiscais e pedidos (módulo de compra e venda)
+
+model Compras {
+  id          String         @id @default(uuid())
+  cnpjTiny    String
+  idIntegracao String        
+  idNota      Float         @unique
+  numeroNota  String
+  dataEmissao DateTime
+  dataEntrada DateTime
+  valor       Float
+  fornecedor  Fornecedores   @relation(fields: [fornecedorId], references: [id])
+  fornecedorId Int
+  ProdutosOnCompras ProdutosOnCompras[]
+  ProdutosNovos     ProdutosNovos[]
+  temProdutosNovos Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fornecedorId])
+}
+
+model Fornecedores {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  cpfCnpj     String    @unique
+  idTiny      Int       @unique    
+  compras     Compras[]
+}
+
+model ProdutosOnCompras {
+  id          Int     @id @default(autoincrement())
+  produto     Produtos       @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId   String
+  quantity    Int
+  compra      Compras        @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  compraId    String
+  valor       Float
+  valorTotal  Float
+
+}
+
+model ProdutosNovos {
+  id          Int     @id @default(autoincrement())
+  idTiny      Int
+  sku         String
+  descricao   String
+  unidade     String
+  quantidade  Float
+  valorUnitario Float
+  valorTotal  Float
+  compra      Compras        @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  compraId    String
+}
+
+
+model Vendas {
+  id                  String               @id @default(uuid())
+  cnpjTiny            String
+  idIntegracao        String
+  idNota              Float                @unique
+  numeroNota          String
+  dataEmissao         DateTime
+  dataInclusao        DateTime
+  valor               Float
+  cliente             Clientes             @relation(fields: [clienteId], references: [id])
+  clienteId           Int
+  ecommerceId         Int?
+  ecommerceNome       String?
+  numeroPedidoEcommerce String?
+  temProdutosNovos    Boolean
+  
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  ProdutosOnVendas    ProdutosOnVendas[]
+  ProdutosEstranhos   ProdutosEstranhos[]
+
+  @@index([clienteId])
+}
+
+model Clientes {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  cpfCnpj     String    @unique
+  idTiny      Int       @unique
+  vendas      Vendas[]
+
+  endereco    String
+  numero      String
+  complemento String
+  bairro      String
+  municipio   String
+  cep         String
+  uf          String
+  pais        String
+}
+
+model ProdutosOnVendas {
+  id          Int        @id @default(autoincrement())
+  produto     Produtos   @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  produtoId   String
+  quantity    Int
+  venda       Vendas     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  vendaId     String
+  valor       Float
+  valorTotal  Float
+}
+
+model ProdutosEstranhos {
+  id           Int      @id @default(autoincrement())
+  idTiny       Int
+  sku          String
+  descricao    String
+  unidade      String
+  quantidade   Float
+  valorUnitario Float
+  valorTotal   Float
+  venda        Vendas   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  vendaId      String
+}
+
+
+
+// DELIMITER //
+
+// -- Trigger para atualização de isLocate após UPDATE
+// CREATE TRIGGER trg_update_isLocate_after_product_change
+// AFTER UPDATE ON Produtos
+// FOR EACH ROW
+// BEGIN
+//     DECLARE product_count INT;
+
+//     -- Caso o produto tenha um novo pickingId (não nulo), faz a contagem para o novo pickingId
+//     IF NEW.pickingId IS NOT NULL THEN
+//         SELECT COUNT(*) INTO product_count
+//         FROM Produtos p
+//         WHERE p.pickingId = NEW.pickingId;
+
+//         -- Atualiza o campo isLocate no picking atualizado
+//         UPDATE Pickings p
+//         SET p.isLocate = (product_count >= p.limit)
+//         WHERE p.id = NEW.pickingId;
+//     END IF;
+
+//     -- Caso o produto tenha sido removido de um picking (disconnect), atualiza o antigo pickingId
+//     IF OLD.pickingId IS NOT NULL THEN
+//         SELECT COUNT(*) INTO product_count
+//         FROM Produtos p
+//         WHERE p.pickingId = OLD.pickingId;
+
+//         -- Atualiza o campo isLocate no antigo picking
+//         UPDATE Pickings p
+//         SET p.isLocate = (product_count >= p.limit)
+//         WHERE p.id = OLD.pickingId;
+//     END IF;
+// END //
+
+// -- Trigger para atualização de isLocate após INSERT
+// CREATE TRIGGER trg_update_isLocate_after_product_insert
+// AFTER INSERT ON Produtos
+// FOR EACH ROW
+// BEGIN
+//     DECLARE product_count INT;
+
+//     -- Caso o produto tenha um pickingId, faz a contagem para o pickingId
+//     IF NEW.pickingId IS NOT NULL THEN
+//         SELECT COUNT(*) INTO product_count
+//         FROM Produtos p
+//         WHERE p.pickingId = NEW.pickingId;
+
+//         -- Atualiza o campo isLocate no picking associado
+//         UPDATE Pickings p
+//         SET p.isLocate = (product_count >= p.limit)
+//         WHERE p.id = NEW.pickingId;
+//     END IF;
+// END //
+
+// -- Trigger para atualização de isLocate após DELETE
+// CREATE TRIGGER trg_update_isLocate_after_product_delete
+// AFTER DELETE ON Produtos
+// FOR EACH ROW
+// BEGIN
+//     DECLARE product_count INT;
+
+//     -- Caso o produto excluído tenha um pickingId, faz a contagem para o antigo pickingId
+//     IF OLD.pickingId IS NOT NULL THEN
+//         SELECT COUNT(*) INTO product_count
+//         FROM Produtos p
+//         WHERE p.pickingId = OLD.pickingId;
+
+//         -- Atualiza o campo isLocate no picking antigo
+//         UPDATE Pickings p
+//         SET p.isLocate = (product_count >= p.limit)
+//         WHERE p.id = OLD.pickingId;
+//     END IF;
+// END //
+
+// DELIMITER ;
